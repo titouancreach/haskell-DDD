@@ -5,12 +5,13 @@
 
 module Infra.PokemonApiFetcher where
 
-import Data.Aeson
+import Data.Aeson (FromJSON, parseJSON, withObject, (.:))
 import Data.Text (Text)
-import qualified Domain.Pokemon as D
+import GHC.Generics (Generic)
+import Network.HTTP.Req (Option, Scheme (Https), Url, https, (/:), (/~))
+
+import qualified Domain.Pokemon as Pokemon
 import qualified Domain.Url as Url
-import GHC.Generics
-import Network.HTTP.Req
 
 newtype HttpClient m = HttpClient
   { getJson :: Url Https -> Option Https -> m (Either String ApiPokemonResponse)
@@ -39,17 +40,21 @@ instance FromJSON ApiPokemonResponse where
 
 instance FromJSON ApiPokemonSprites
 
-fromPokemonApiResponse :: ApiPokemonResponse -> D.Pokemon
+fromPokemonApiResponse :: ApiPokemonResponse -> Pokemon.Pokemon
 fromPokemonApiResponse apiResp =
-  D.Pokemon (D.PokemonId (pokemonId apiResp)) (D.PokemonName (name apiResp)) (height apiResp) ((Url.ImageUrl . front_default . sprites) apiResp)
+  Pokemon.Pokemon
+    (Pokemon.PokemonId (pokemonId apiResp))
+    (Pokemon.PokemonName (name apiResp))
+    (height apiResp)
+    ((Url.ImageUrl . front_default . sprites) apiResp)
 
 fetchPokemonByNameWithClient ::
   HttpClient IO ->
-  D.PokemonName ->
-  IO (Either D.DomainError D.Pokemon)
+  Pokemon.PokemonName ->
+  IO (Either Pokemon.DomainError Pokemon.Pokemon)
 fetchPokemonByNameWithClient client pokemonName = do
-  let url = https "pokeapi.co" /: "api" /: "v2" /: "pokemon" /~ D.unPokemonName pokemonName
+  let url = https "pokeapi.co" /: "api" /: "v2" /: "pokemon" /~ Pokemon.unPokemonName pokemonName
   result <- getJson client url mempty
   case result of
-    Left _ -> pure . Left $ D.ExternalApiError (D.unPokemonName pokemonName)
+    Left _ -> pure . Left $ Pokemon.ExternalApiError (Pokemon.unPokemonName pokemonName)
     Right apiPokemon -> pure . Right $ fromPokemonApiResponse apiPokemon

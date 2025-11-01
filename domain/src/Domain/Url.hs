@@ -1,9 +1,9 @@
 module Domain.Url where
 
-import qualified Data.Text as T
+import Data.Text (Text)
 
-newtype Url = Url {unUrl :: T.Text}
+newtype Url = Url {unUrl :: Text}
   deriving (Show, Eq, Ord)
 
-newtype ImageUrl = ImageUrl {unImageUrl :: T.Text}
+newtype ImageUrl = ImageUrl {unImageUrl :: Text}
   deriving (Show, Eq, Ord)

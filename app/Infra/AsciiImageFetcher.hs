@@ -3,8 +3,8 @@
 
 module Infra.AsciiImageFetcher where
 
-import Data.Text
-import Network.HTTP.Req
+import Data.Text (Text)
+import Network.HTTP.Req (Option, Scheme (Https), Url, https, (/:))
 
 newtype HttpClient m = HttpClient
   { getText :: Url Https -> Option Https -> m (Either Text Text)

@@ -2,19 +2,28 @@
 
 module Main where
 
-import AppM (AppM, Env (..), runAppM)
-import AsciiImageService ()
 import Control.Monad.Except (ExceptT (..), runExceptT, withExceptT)
-import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Reader (ReaderT (runReaderT))
-import qualified Data.ByteString as BS
-import qualified Data.Text as T
-import qualified Data.Text.Encoding as TE
-import qualified Domain.Ascii as D
-import qualified Domain.Pokemon as D
+import qualified Data.ByteString as ByteString
+import qualified Data.Text as Text
+import qualified Data.Text.Encoding as TextEncoding
+import Network.HTTP.Req
+  ( GET (GET),
+    NoReqBody (NoReqBody),
+    bsResponse,
+    defaultHttpConfig,
+    jsonResponse,
+    req,
+    responseBody,
+    runReq,
+  )
+
+import AsciiImageService ()
+import qualified AppM
+import qualified Domain.Ascii as Ascii
+import qualified Domain.Pokemon as Pokemon
 import qualified Infra.AsciiImageFetcher as AsciiImageFetcher
 import qualified Infra.PokemonApiFetcher as PokemonApiFetcher
-import Network.HTTP.Req
 import PokemonService ()
 
 pokemonHttpClient :: PokemonApiFetcher.HttpClient IO
@@ -28,23 +37,23 @@ asciiHttpClient :: AsciiImageFetcher.HttpClient IO
 asciiHttpClient = AsciiImageFetcher.HttpClient $ \url opts -> do
   result <- runReq defaultHttpConfig $ do
     response <- req GET url NoReqBody bsResponse opts
-    pure (responseBody response :: BS.ByteString)
-  pure $ Right (TE.decodeUtf8 result)
+    pure (responseBody response :: ByteString.ByteString)
+  pure $ Right (TextEncoding.decodeUtf8 result)
 
-getAsciiImageByName :: D.PokemonName -> AppM (Either D.DomainError D.Ascii)
+getAsciiImageByName :: Pokemon.PokemonName -> AppM.AppM (Either Pokemon.DomainError Ascii.Ascii)
 getAsciiImageByName name = do
   result <- runExceptT $ do
-    pokemon <- ExceptT $ D.fetchPokemonByName name
-    let imageUrl = D.imageUrl pokemon
-    withExceptT D.ExternalApiError $
+    pokemon <- ExceptT $ Pokemon.fetchPokemonByName name
+    let imageUrl = Pokemon.imageUrl pokemon
+    withExceptT Pokemon.ExternalApiError $
       ExceptT $
-        D.imageUrlToAscii imageUrl
-  pure $ result
+        Ascii.imageUrlToAscii imageUrl
+  pure result
 
 main :: IO ()
 main = do
-  let env = Env pokemonHttpClient asciiHttpClient
-  result <- runReaderT (runAppM (getAsciiImageByName $ D.PokemonName "pikachu")) env
+  let env = AppM.Env pokemonHttpClient asciiHttpClient
+  result <- runReaderT (AppM.runAppM (getAsciiImageByName $ Pokemon.PokemonName "pikachu")) env
   case result of
     Left err -> putStrLn $ "Error: " ++ show err
-    Right ascii -> putStrLn $ "ASCII Image:\n" ++ T.unpack (D.content ascii)
+    Right ascii -> putStrLn $ "ASCII Image:\n" ++ Text.unpack (Ascii.content ascii)

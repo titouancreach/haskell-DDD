@@ -4,12 +4,13 @@
 
 module PokemonService where
 
-import AppM
 import Control.Monad.Reader (ask, liftIO)
-import qualified Domain.Pokemon as D
-import Infra.PokemonApiFetcher (fetchPokemonByNameWithClient)
 
-instance D.PokemonFetcher AppM where
+import qualified AppM
+import qualified Domain.Pokemon as Pokemon
+import qualified Infra.PokemonApiFetcher as PokemonApiFetcher
+
+instance Pokemon.PokemonFetcher AppM.AppM where
   fetchPokemonByName name = do
     env <- ask
-    liftIO $ fetchPokemonByNameWithClient (httpClientPokemon env) name
+    liftIO $ PokemonApiFetcher.fetchPokemonByNameWithClient (AppM.httpClientPokemon env) name

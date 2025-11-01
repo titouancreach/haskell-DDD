@@ -3,14 +3,14 @@
 
 module AppM where
 
-import Control.Monad.IO.Class
-import Control.Monad.Reader
-import Domain.Pokemon (PokemonFetcher)
+import Control.Monad.IO.Class (MonadIO)
+import Control.Monad.Reader (MonadReader, ReaderT)
+
 import qualified Infra.AsciiImageFetcher as AsciiImageFetcher
-import qualified Infra.PokemonApiFetcher as PokemonFetcher
+import qualified Infra.PokemonApiFetcher as PokemonApiFetcher
 
 data Env = Env
-  { httpClientPokemon :: PokemonFetcher.HttpClient IO,
+  { httpClientPokemon :: PokemonApiFetcher.HttpClient IO,
     httpClientAscii :: AsciiImageFetcher.HttpClient IO
   }
 
