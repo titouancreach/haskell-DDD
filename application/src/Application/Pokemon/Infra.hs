@@ -3,7 +3,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
-module Infra.PokemonApiFetcher where
+module Application.Pokemon.Infra where
 
 import Control.Exception (try, SomeException)
 import Data.Aeson (FromJSON, parseJSON, withObject, (.:))
@@ -28,6 +28,7 @@ import Network.HTTP.Req (
 import qualified Domain.Pokemon as Pokemon
 import qualified Domain.Url as Url
 
+-- Internal API response types
 newtype ApiPokemonSprites = ApiPokemonSprites
   { front_default :: Text
   }
@@ -59,11 +60,11 @@ fromPokemonApiResponse apiResp =
     (height apiResp)
     ((Url.ImageUrl . front_default . sprites) apiResp)
 
--- Pure implementation that can be injected
-fetchPokemonByName ::
+-- | HTTP implementation for fetching Pokemon
+fetchPokemonByNameHttp ::
   Pokemon.PokemonName ->
   IO (Either Pokemon.DomainError Pokemon.Pokemon)
-fetchPokemonByName pokemonName = do
+fetchPokemonByNameHttp pokemonName = do
   let url = https "pokeapi.co" /: "api" /: "v2" /: "pokemon" /~ Pokemon.unPokemonName pokemonName
   result <- try $ runReq defaultHttpConfig $ do
     response <- req GET url NoReqBody jsonResponse (mempty :: Option Https)
@@ -73,3 +74,4 @@ fetchPokemonByName pokemonName = do
       pure . Left $ Pokemon.ExternalApiError (Text.pack $ show err)
     Right apiPokemon -> 
       pure . Right $ fromPokemonApiResponse apiPokemon
+

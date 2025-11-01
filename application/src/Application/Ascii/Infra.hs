@@ -2,7 +2,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
-module Infra.AsciiImageFetcher where
+module Application.Ascii.Infra where
 
 import Control.Exception (try, SomeException)
 import qualified Data.ByteString as ByteString
@@ -27,9 +27,9 @@ import Network.HTTP.Req (
 import qualified Domain.Ascii as Ascii
 import qualified Domain.Url as Url
 
--- Pure implementation that can be injected
-fetchAsciiImageByUrl :: Url.ImageUrl -> IO (Either Text Ascii.Ascii)
-fetchAsciiImageByUrl (Url.ImageUrl imageUrl) = do
+-- | HTTP implementation for converting images to ASCII
+fetchAsciiImageByUrlHttp :: Url.ImageUrl -> IO (Either Text Ascii.Ascii)
+fetchAsciiImageByUrlHttp (Url.ImageUrl imageUrl) = do
   let url = https "api.apileague.com" /: "convert-image-to-ascii-txt"
       params :: Option Https
       params = "url" =: (imageUrl :: Text) <> "width" =: (100 :: Int) <> "height" =: (100 :: Int)
@@ -43,3 +43,4 @@ fetchAsciiImageByUrl (Url.ImageUrl imageUrl) = do
       pure $ Left (Text.pack $ show err)
     Right bytes -> 
       pure $ Right (Ascii.Ascii (TextEncoding.decodeUtf8 bytes))
+

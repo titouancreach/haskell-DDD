@@ -3,7 +3,9 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 
-module AppM where
+-- | Application monad and capability implementations
+-- This module aggregates all feature capabilities and provides the production monad
+module Application.AppM where
 
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import Control.Monad.Reader (MonadReader, ReaderT, ask)
@@ -13,30 +15,28 @@ import qualified Domain.Ascii as Ascii
 import qualified Domain.Pokemon as Pokemon
 import qualified Domain.Url as Url
 
--- Capability type classes for application layer
-class (Monad m) => MonadPokemonFetcher m where
-  fetchPokemonByName :: Pokemon.PokemonName -> m (Either Pokemon.DomainError Pokemon.Pokemon)
+import Application.Ascii.Capability
+import Application.Pokemon.Capability
 
-class (Monad m) => MonadAsciiConverter m where
-  imageUrlToAscii :: Url.ImageUrl -> m (Either Text Ascii.Ascii)
-
--- Environment holds concrete implementations
+-- | Environment holding concrete implementations for each feature
 data Env = Env
   { pokemonFetcher :: Pokemon.PokemonName -> IO (Either Pokemon.DomainError Pokemon.Pokemon),
     asciiConverter :: Url.ImageUrl -> IO (Either Text Ascii.Ascii)
   }
 
--- Application monad
+-- | Production application monad
 newtype AppM a = AppM {runAppM :: ReaderT Env IO a}
   deriving newtype (Functor, Applicative, Monad, MonadIO, MonadReader Env)
 
--- Implement capabilities for AppM (NO orphan instances!)
-instance MonadPokemonFetcher AppM where
+-- | Implement Pokemon capability for AppM
+instance HasPokemonFetcher AppM where
   fetchPokemonByName name = do
     env <- ask
     liftIO $ pokemonFetcher env name
 
-instance MonadAsciiConverter AppM where
+-- | Implement ASCII capability for AppM
+instance HasAsciiConverter AppM where
   imageUrlToAscii url = do
     env <- ask
     liftIO $ asciiConverter env url
+
