@@ -7,7 +7,7 @@ import Control.Monad.IO.Class
 import Control.Monad.Reader
 import Infra.PokemonApiFetcher (HttpClient)
 
-data Env = Env
+newtype Env = Env
   { httpClient :: HttpClient IO
   }
 
