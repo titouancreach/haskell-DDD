@@ -1,22 +1,45 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 module Infra.AsciiImageFetcher where
 
+import Control.Exception (try, SomeException)
+import qualified Data.ByteString as ByteString
 import Data.Text (Text)
-import Network.HTTP.Req (Option, Scheme (Https), Url, https, (/:), (=:))
+import qualified Data.Text as Text
+import qualified Data.Text.Encoding as TextEncoding
+import Network.HTTP.Req (
+  GET (GET),
+  NoReqBody (NoReqBody),
+  Option,
+  Scheme (Https),
+  bsResponse,
+  defaultHttpConfig,
+  https,
+  req,
+  responseBody,
+  runReq,
+  (/:),
+  (=:),
+ )
 
-newtype HttpClient m = HttpClient
-  { getText :: Url Https -> Option Https -> m (Either Text Text)
-  }
+import qualified Domain.Ascii as Ascii
+import qualified Domain.Url as Url
 
-fetchAsciiImageByUrlWithClient :: HttpClient IO -> Text -> IO (Either Text Text)
-fetchAsciiImageByUrlWithClient client imageUrl = do
+-- Pure implementation that can be injected
+fetchAsciiImageByUrl :: Url.ImageUrl -> IO (Either Text Ascii.Ascii)
+fetchAsciiImageByUrl (Url.ImageUrl imageUrl) = do
   let url = https "api.apileague.com" /: "convert-image-to-ascii-txt"
       params :: Option Https
       params = "url" =: (imageUrl :: Text) <> "width" =: (100 :: Int) <> "height" =: (100 :: Int)
 
-  result <- getText client url params
+  result <- try $ runReq defaultHttpConfig $ do
+    response <- req GET url NoReqBody bsResponse params
+    pure (responseBody response :: ByteString.ByteString)
+
   case result of
-    Left err -> pure $ Left err
-    Right asciiImage -> pure $ Right asciiImage
+    Left (err :: SomeException) -> 
+      pure $ Left (Text.pack $ show err)
+    Right bytes -> 
+      pure $ Right (Ascii.Ascii (TextEncoding.decodeUtf8 bytes))

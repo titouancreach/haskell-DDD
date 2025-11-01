@@ -1,4 +1,4 @@
-module Domain.Pokemon (Pokemon (..), PokemonFetcher (..), PokemonId (..), PokemonName (..), DomainError (..)) where
+module Domain.Pokemon (Pokemon (..), PokemonId (..), PokemonName (..), DomainError (..)) where
 
 import Data.Text (Text)
 import qualified Domain.Url as Url
@@ -14,9 +14,6 @@ newtype PokemonName = PokemonName {unPokemonName :: Text}
 
 newtype PokemonId = PokemonId {unPokemonId :: Int}
   deriving (Show, Eq, Ord)
-
-class (Monad m) => PokemonFetcher m where
-  fetchPokemonByName :: PokemonName -> m (Either DomainError Pokemon)
 
 data Pokemon = Pokemon
   { pokemonId :: PokemonId

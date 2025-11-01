@@ -1,21 +1,32 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE OverloadedStrings #-}
-{-# OPTIONS_GHC -Wno-orphans #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 module Infra.PokemonApiFetcher where
 
+import Control.Exception (try, SomeException)
 import Data.Aeson (FromJSON, parseJSON, withObject, (.:))
 import Data.Text (Text)
+import qualified Data.Text as Text
 import GHC.Generics (Generic)
-import Network.HTTP.Req (Option, Scheme (Https), Url, https, (/:), (/~))
+import Network.HTTP.Req (
+  GET (GET),
+  NoReqBody (NoReqBody),
+  Option,
+  Scheme (Https),
+  defaultHttpConfig,
+  https,
+  jsonResponse,
+  req,
+  responseBody,
+  runReq,
+  (/:),
+  (/~),
+ )
 
 import qualified Domain.Pokemon as Pokemon
 import qualified Domain.Url as Url
-
-newtype HttpClient m = HttpClient
-  { getJson :: Url Https -> Option Https -> m (Either String ApiPokemonResponse)
-  }
 
 newtype ApiPokemonSprites = ApiPokemonSprites
   { front_default :: Text
@@ -48,13 +59,17 @@ fromPokemonApiResponse apiResp =
     (height apiResp)
     ((Url.ImageUrl . front_default . sprites) apiResp)
 
-fetchPokemonByNameWithClient ::
-  HttpClient IO ->
+-- Pure implementation that can be injected
+fetchPokemonByName ::
   Pokemon.PokemonName ->
   IO (Either Pokemon.DomainError Pokemon.Pokemon)
-fetchPokemonByNameWithClient client pokemonName = do
+fetchPokemonByName pokemonName = do
   let url = https "pokeapi.co" /: "api" /: "v2" /: "pokemon" /~ Pokemon.unPokemonName pokemonName
-  result <- getJson client url mempty
+  result <- try $ runReq defaultHttpConfig $ do
+    response <- req GET url NoReqBody jsonResponse (mempty :: Option Https)
+    pure (responseBody response :: ApiPokemonResponse)
   case result of
-    Left _ -> pure . Left $ Pokemon.ExternalApiError (Pokemon.unPokemonName pokemonName)
-    Right apiPokemon -> pure . Right $ fromPokemonApiResponse apiPokemon
+    Left (err :: SomeException) -> 
+      pure . Left $ Pokemon.ExternalApiError (Text.pack $ show err)
+    Right apiPokemon -> 
+      pure . Right $ fromPokemonApiResponse apiPokemon
