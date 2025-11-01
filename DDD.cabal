@@ -58,10 +58,11 @@ library
     import:           warnings
 
     -- Modules exported by the library.
-    exposed-modules:
-        Infra.PokemonApiFetcher
+    exposed-modules: Infra.PokemonApiFetcher
+        , AsciiImageService
         , AppM
         , PokemonService
+        , Infra.AsciiImageFetcher
 
     -- Other library packages from which modules are imported.
     build-depends:    base ^>=4.18.3.0
@@ -115,6 +116,8 @@ executable DDD
         , mtl
         , domain
         , req
+        , text
+        , bytestring
 
     -- Directories containing source files.
     hs-source-dirs:   exe

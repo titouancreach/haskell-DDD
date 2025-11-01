@@ -5,10 +5,13 @@ module AppM where
 
 import Control.Monad.IO.Class
 import Control.Monad.Reader
-import Infra.PokemonApiFetcher (HttpClient)
+import Domain.Pokemon (PokemonFetcher)
+import qualified Infra.AsciiImageFetcher as AsciiImageFetcher
+import qualified Infra.PokemonApiFetcher as PokemonFetcher
 
-newtype Env = Env
-  { httpClient :: HttpClient IO
+data Env = Env
+  { httpClientPokemon :: PokemonFetcher.HttpClient IO,
+    httpClientAscii :: AsciiImageFetcher.HttpClient IO
   }
 
 newtype AppM a = AppM {runAppM :: ReaderT Env IO a}

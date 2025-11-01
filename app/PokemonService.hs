@@ -12,4 +12,4 @@ import Infra.PokemonApiFetcher (fetchPokemonByNameWithClient)
 instance D.PokemonFetcher AppM where
   fetchPokemonByName name = do
     env <- ask
-    liftIO $ fetchPokemonByNameWithClient (httpClient env) name
+    liftIO $ fetchPokemonByNameWithClient (httpClientPokemon env) name

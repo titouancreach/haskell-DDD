@@ -1,6 +1,7 @@
 module Domain.Pokemon (Pokemon (..), PokemonFetcher (..), PokemonId (..), PokemonName (..), DomainError (..)) where
 
 import Data.Text (Text)
+import qualified Domain.Url as Url
 
 data DomainError
   = NotFound
@@ -20,6 +21,7 @@ class (Monad m) => PokemonFetcher m where
 data Pokemon = Pokemon
   { pokemonId :: PokemonId,
     name :: PokemonName,
-    height :: Int
+    height :: Int,
+    imageUrl :: Url.ImageUrl
   }
   deriving (Show, Eq)

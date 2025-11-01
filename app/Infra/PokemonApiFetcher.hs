@@ -8,15 +8,16 @@ module Infra.PokemonApiFetcher where
 import Data.Aeson
 import Data.Text (Text)
 import qualified Domain.Pokemon as D
+import qualified Domain.Url as Url
 import GHC.Generics
 import Network.HTTP.Req
 
-data HttpClient m = HttpClient
+newtype HttpClient m = HttpClient
   { getJson :: Url Https -> Option Https -> m (Either String ApiPokemonResponse)
   }
 
 newtype ApiPokemonSprites = ApiPokemonSprites
-  { front_default :: Maybe Text
+  { front_default :: Text
   }
   deriving (Show, Generic)
 
@@ -40,7 +41,7 @@ instance FromJSON ApiPokemonSprites
 
 fromPokemonApiResponse :: ApiPokemonResponse -> D.Pokemon
 fromPokemonApiResponse apiResp =
-  D.Pokemon (D.PokemonId (pokemonId apiResp)) (D.PokemonName (name apiResp)) (height apiResp)
+  D.Pokemon (D.PokemonId (pokemonId apiResp)) (D.PokemonName (name apiResp)) (height apiResp) ((Url.ImageUrl . front_default . sprites) apiResp)
 
 fetchPokemonByNameWithClient ::
   HttpClient IO ->
