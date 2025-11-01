@@ -1,5 +1,6 @@
 packages:
   ./domain
-  ./
+  ./application
+  ./exe-package
 
 tests: True

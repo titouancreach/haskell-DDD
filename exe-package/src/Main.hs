@@ -7,19 +7,19 @@ import Control.Monad.Reader (ReaderT (runReaderT))
 import qualified Data.ByteString as ByteString
 import qualified Data.Text as Text
 import qualified Data.Text.Encoding as TextEncoding
-import Network.HTTP.Req
-  ( GET (GET),
-    NoReqBody (NoReqBody),
-    bsResponse,
-    defaultHttpConfig,
-    jsonResponse,
-    req,
-    responseBody,
-    runReq,
-  )
+import Network.HTTP.Req (
+  GET (GET),
+  NoReqBody (NoReqBody),
+  bsResponse,
+  defaultHttpConfig,
+  jsonResponse,
+  req,
+  responseBody,
+  runReq,
+ )
 
-import AsciiImageService ()
 import qualified AppM
+import AsciiImageService ()
 import qualified Domain.Ascii as Ascii
 import qualified Domain.Pokemon as Pokemon
 import qualified Infra.AsciiImageFetcher as AsciiImageFetcher
@@ -42,13 +42,12 @@ asciiHttpClient = AsciiImageFetcher.HttpClient $ \url opts -> do
 
 getAsciiImageByName :: Pokemon.PokemonName -> AppM.AppM (Either Pokemon.DomainError Ascii.Ascii)
 getAsciiImageByName name = do
-  result <- runExceptT $ do
+  runExceptT $ do
     pokemon <- ExceptT $ Pokemon.fetchPokemonByName name
     let imageUrl = Pokemon.imageUrl pokemon
     withExceptT Pokemon.ExternalApiError $
       ExceptT $
         Ascii.imageUrlToAscii imageUrl
-  pure result
 
 main :: IO ()
 main = do

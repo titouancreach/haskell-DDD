@@ -19,9 +19,9 @@ class (Monad m) => PokemonFetcher m where
   fetchPokemonByName :: PokemonName -> m (Either DomainError Pokemon)
 
 data Pokemon = Pokemon
-  { pokemonId :: PokemonId,
-    name :: PokemonName,
-    height :: Int,
-    imageUrl :: Url.ImageUrl
+  { pokemonId :: PokemonId
+  , name :: PokemonName
+  , height :: Int
+  , imageUrl :: Url.ImageUrl
   }
   deriving (Show, Eq)

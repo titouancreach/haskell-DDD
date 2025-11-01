@@ -1,12 +1,10 @@
 {-# LANGUAGE DataKinds #-}
-{-# LANGUAGE DeriveGeneric #-}
-{-# LANGUAGE OverloadedStrings #-}
+{-# OPTIONS_GHC -Wno-orphans #-}
 
 module AsciiImageService where
 
-import Control.Monad.Reader (ask, liftIO)
-
 import qualified AppM
+import Control.Monad.Reader (ask, liftIO)
 import qualified Domain.Ascii as Ascii
 import qualified Domain.Url as Url
 import qualified Infra.AsciiImageFetcher as AsciiImageFetcher
