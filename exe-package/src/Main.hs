@@ -12,6 +12,7 @@ import qualified Domain.Pokemon as Pokemon
 import Application.AppM
 import Application.Ascii
 import Application.Pokemon
+import Colog (richMessageAction)
 
 -- | Map Pokemon domain errors to UnexpectedError
 mapPokemonError :: Pokemon.DomainError -> Error.UnexpectedError
@@ -52,6 +53,7 @@ main = do
         Env
           { pokemonFetcher = Application.Pokemon.fetchPokemonByNameHttp
           , asciiConverter = Application.Ascii.fetchAsciiImageByUrlHttp
+          , logAction = richMessageAction
           }
 
   -- Run the application
