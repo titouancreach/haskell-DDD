@@ -4,8 +4,9 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE OverloadedStrings #-}
 
--- | Test monad with mock implementations
--- This module provides a test monad that implements all application capabilities with mock data
+{- | Test monad with mock implementations
+This module provides a test monad that implements all application capabilities with mock data
+-}
 module Application.TestM where
 
 import Control.Monad.IO.Class (MonadIO)
@@ -22,14 +23,14 @@ import Application.Pokemon.Capability
 
 -- | Test environment that can be configured with mock data
 data TestEnv = TestEnv
-  { mockPokemon :: [(Pokemon.PokemonName, Either Pokemon.DomainError Pokemon.Pokemon)],
-    mockAsciiImages :: [(Url.ImageUrl, Either Text Ascii.Ascii)]
+  { mockPokemon :: [(Pokemon.PokemonName, Either Pokemon.DomainError Pokemon.Pokemon)]
+  , mockAsciiImages :: [(Url.ImageUrl, Either Text Ascii.Ascii)]
   }
 
 -- | Test state to track calls made during tests
 data TestState = TestState
-  { pokemonFetchCalls :: [Pokemon.PokemonName],
-    asciiConversionCalls :: [Url.ImageUrl]
+  { pokemonFetchCalls :: [Pokemon.PokemonName]
+  , asciiConversionCalls :: [Url.ImageUrl]
   }
 
 -- | Test monad with state tracking
@@ -40,8 +41,8 @@ newtype TestM a = TestM {runTestM :: StateT TestState (ReaderT TestEnv IO) a}
 instance HasPokemonFetcher TestM where
   fetchPokemonByName name = do
     -- Track that this call was made
-    modify $ \s -> s {pokemonFetchCalls = name : pokemonFetchCalls s}
-    
+    modify $ \s -> s{pokemonFetchCalls = name : pokemonFetchCalls s}
+
     -- Look up mock response
     env <- ask
     let result = lookup name (mockPokemon env)
@@ -53,8 +54,8 @@ instance HasPokemonFetcher TestM where
 instance HasAsciiConverter TestM where
   imageUrlToAscii url = do
     -- Track that this call was made
-    modify $ \s -> s {asciiConversionCalls = url : asciiConversionCalls s}
-    
+    modify $ \s -> s{asciiConversionCalls = url : asciiConversionCalls s}
+
     -- Look up mock response
     env <- ask
     let result = lookup url (mockAsciiImages env)
@@ -65,7 +66,7 @@ instance HasAsciiConverter TestM where
 -- | Helper to run tests with mock data
 runTest :: TestEnv -> TestM a -> IO (a, TestState)
 runTest env (TestM action) = do
-  let initialState = TestState {pokemonFetchCalls = [], asciiConversionCalls = []}
+  let initialState = TestState{pokemonFetchCalls = [], asciiConversionCalls = []}
   runReaderT (runStateT action initialState) env
 
 -- | Test helper: create a successful Pokemon mock
@@ -79,4 +80,3 @@ mockPokemonError name err = (name, Left err)
 -- | Test helper: create a successful ASCII conversion mock
 mockAsciiSuccess :: Url.ImageUrl -> Ascii.Ascii -> (Url.ImageUrl, Either Text Ascii.Ascii)
 mockAsciiSuccess url ascii = (url, Right ascii)
-
