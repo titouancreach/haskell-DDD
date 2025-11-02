@@ -40,6 +40,11 @@ getAsciiImageByName name = do
         Left asciiErr -> Left $ mapAsciiError asciiErr
         Right ascii -> Right ascii
 
+program :: AppM (Either Error.UnexpectedError Ascii.Ascii)
+program = do
+  result <- getAsciiImageByName (Pokemon.PokemonName "pikachu")
+  pure $ result
+
 main :: IO ()
 main = do
   -- Wire up dependencies: inject real implementations into environment
@@ -50,7 +55,7 @@ main = do
           }
 
   -- Run the application
-  result <- runReaderT (runAppM (getAsciiImageByName $ Pokemon.PokemonName "pikachu")) env
+  result <- runReaderT (runAppM program) env
 
   case result of
     Left err -> putStrLn $ "Error: " ++ show err
