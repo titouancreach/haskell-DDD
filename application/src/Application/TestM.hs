@@ -12,7 +12,6 @@ module Application.TestM where
 import Control.Monad.IO.Class (MonadIO)
 import Control.Monad.Reader (MonadReader, ReaderT, ask, runReaderT)
 import Control.Monad.State (MonadState, StateT, modify, runStateT)
-import Data.Text (Text)
 
 import qualified Domain.Ascii as Ascii
 import qualified Domain.Pokemon as Pokemon
@@ -24,7 +23,7 @@ import Application.Pokemon.Capability
 -- | Test environment that can be configured with mock data
 data TestEnv = TestEnv
   { mockPokemon :: [(Pokemon.PokemonName, Either Pokemon.DomainError Pokemon.Pokemon)]
-  , mockAsciiImages :: [(Url.ImageUrl, Either Text Ascii.Ascii)]
+  , mockAsciiImages :: [(Url.ImageUrl, Either Ascii.Error Ascii.Ascii)]
   }
 
 -- | Test state to track calls made during tests
@@ -61,7 +60,7 @@ instance HasAsciiConverter TestM where
     let result = lookup url (mockAsciiImages env)
     pure $ case result of
       Just response -> response
-      Nothing -> Left ("Image not found in mock data" :: Text)
+      Nothing -> Left (Ascii.ExternalApiError "Image not found in mock data")
 
 -- | Helper to run tests with mock data
 runTest :: TestEnv -> TestM a -> IO (a, TestState)
@@ -78,5 +77,5 @@ mockPokemonError :: Pokemon.PokemonName -> Pokemon.DomainError -> (Pokemon.Pokem
 mockPokemonError name err = (name, Left err)
 
 -- | Test helper: create a successful ASCII conversion mock
-mockAsciiSuccess :: Url.ImageUrl -> Ascii.Ascii -> (Url.ImageUrl, Either Text Ascii.Ascii)
+mockAsciiSuccess :: Url.ImageUrl -> Ascii.Ascii -> (Url.ImageUrl, Either Ascii.Error Ascii.Ascii)
 mockAsciiSuccess url ascii = (url, Right ascii)

@@ -4,7 +4,7 @@
 
 module Application.Ascii.Infra where
 
-import Control.Exception (try, SomeException)
+import Control.Exception (SomeException, try)
 import qualified Data.ByteString as ByteString
 import Data.Text (Text)
 import qualified Data.Text as Text
@@ -28,7 +28,7 @@ import qualified Domain.Ascii as Ascii
 import qualified Domain.Url as Url
 
 -- | HTTP implementation for converting images to ASCII
-fetchAsciiImageByUrlHttp :: Url.ImageUrl -> IO (Either Text Ascii.Ascii)
+fetchAsciiImageByUrlHttp :: Url.ImageUrl -> IO (Either Ascii.Error Ascii.Ascii)
 fetchAsciiImageByUrlHttp (Url.ImageUrl imageUrl) = do
   let url = https "api.apileague.com" /: "convert-image-to-ascii-txt"
       params :: Option Https
@@ -39,8 +39,7 @@ fetchAsciiImageByUrlHttp (Url.ImageUrl imageUrl) = do
     pure (responseBody response :: ByteString.ByteString)
 
   case result of
-    Left (err :: SomeException) -> 
-      pure $ Left (Text.pack $ show err)
-    Right bytes -> 
+    Left (err :: SomeException) ->
+      pure $ Left (Ascii.ExternalApiError (Text.pack $ show err))
+    Right bytes ->
       pure $ Right (Ascii.Ascii (TextEncoding.decodeUtf8 bytes))
-

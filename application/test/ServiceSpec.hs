@@ -26,7 +26,7 @@ getAsciiImageByName name = do
     Right pokemon -> do
       asciiResult <- imageUrlToAscii (Pokemon.imageUrl pokemon)
       pure $ case asciiResult of
-        Left err -> Left (Pokemon.ExternalApiError err)
+        Left (Ascii.ExternalApiError msg) -> Left (Pokemon.ExternalApiError msg)
         Right ascii -> Right ascii
 
 main :: IO ()

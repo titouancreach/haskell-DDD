@@ -58,7 +58,7 @@ library
     import:           warnings
 
     -- Modules exported by the library.
-    exposed-modules:  Domain.Pokemon, Domain.Url, Domain.Ascii
+    exposed-modules:  Domain.Pokemon, Domain.Url, Domain.Ascii, Domain.Error
 
     -- Modules included in this library but not exported.
     -- other-modules:
